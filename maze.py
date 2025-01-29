@@ -19,6 +19,7 @@ class Maze:
         self._create_cells()
         self._break_entrance_and_exit()
         self._break_walls_r(0, 0)
+        self._reset_cells_visited()
 
     def _create_cells(self):
         for i in range(self._num_cols):
@@ -43,7 +44,7 @@ class Maze:
         if self._win is None: # in test case
             return
         self._win.redraw()
-        time.sleep(0.05)
+        time.sleep(0.5)
 
     def _break_entrance_and_exit(self):
         self._cells[0][0].has_top_wall = False
@@ -52,8 +53,10 @@ class Maze:
         self._draw_cell(self._num_cols-1, self._num_rows-1)
 
     def _break_walls_r(self, i, j):
+        print(f"Visiting cell ({i}, {j})")
         curr_cell = self._cells[i][j]
         curr_cell.visited = True
+        # to see the breaking walls in the right order, add here : self._draw_cell(i, j)
         while True:
             next_index_list = []
             
@@ -99,6 +102,54 @@ class Maze:
             
             # move to chosen cell
             self._break_walls_r(next_index[0], next_index[1])
+    
+
+    def _reset_cells_visited(self):
+        for col in self._cells:
+            for cell in col:
+                cell.visited = False
+
+    def solve(self):
+        return self._solve_r(0, 0)
+    
+    def _solve_r(self, i, j):
+        self._animate()
+        curr_cell = self._cells[i][j]
+        curr_cell.visited = True
+        
+        # find the exit cell ?
+        if i == self._num_cols - 1 and j == self._num_rows - 1:
+            return True
+        
+        # looking left
+        if i > 0 and not curr_cell.has_left_wall and not self._cells[i-1][j].has_right_wall and not self._cells[i-1][j].visited:
+            curr_cell.draw_move(self._cells[i-1][j])
+            if self._solve_r(i - 1, j):
+                return True
+            else:
+                curr_cell.draw_move(self._cells[i-1][j], undo=True)
+        # looking right
+        if i < (self._num_cols - 1) and not curr_cell.has_right_wall and not self._cells[i+1][j].has_left_wall and not self._cells[i+1][j].visited:
+            curr_cell.draw_move(self._cells[i+1][j])
+            if self._solve_r(i + 1, j):
+                return True
+            else:
+                curr_cell.draw_move(self._cells[i+1][j], undo=True)
+        # looking top
+        if j > 0 and not curr_cell.has_top_wall and not self._cells[i][j-1].has_bottom_wall and not self._cells[i][j-1].visited:
+            curr_cell.draw_move(self._cells[i][j-1])
+            if self._solve_r(i, j - 1):
+                return True
+            else:
+                curr_cell.draw_move(self._cells[i][j-1], undo=True)
+        # looking bottom
+        if j < (self._num_rows - 1) and not curr_cell.has_bottom_wall and not self._cells[i][j+1].has_top_wall and not self._cells[i][j+1].visited:
+            curr_cell.draw_move(self._cells[i][j+1])
+            if self._solve_r(i, j + 1):
+                return True
+            else:
+                curr_cell.draw_move(self._cells[i][j+1], undo=True)
+        return False
 
 
             
